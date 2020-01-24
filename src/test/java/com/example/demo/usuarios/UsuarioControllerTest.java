@@ -713,4 +713,60 @@ public class UsuarioControllerTest extends DemoApplicationTests {
         assertThat(body).isEqualTo("{\"mensagem\":\"Senha inválida\"}");
     }
 
+
+    /* Feature Listar todos os usuários */
+
+    @Test
+    public void dadoSolicitacaoTodosUsuariosDeveRetornarStatus200() {
+
+        Integer statusCode = RestAssured.given()
+                .get(url("/todos"))
+                .then().extract().response().getStatusCode();
+
+        assertThat(statusCode).isEqualTo(HttpStatus.OK.value());
+    }
+
+    @Test
+    public void dadoSolicitacaoTodosUsuariosDeveRetornarListaDeUsuarios() {
+
+        List<Usuario> lista = RestAssured.given()
+                .get(url("/todos"))
+                .then().extract().body().jsonPath().getList("usuarios", Usuario.class);
+
+        assertThat(lista.size()).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    public void dadoSolicitacaoTodosUsuariosDeveRetornarUsuariosComNomesValidos() {
+
+        List<Usuario> lista = RestAssured.given()
+                .get(url("/todos"))
+                .then().extract().body().jsonPath().getList("usuarios", Usuario.class);
+
+        assertThat(lista.stream().allMatch(i -> i.getName() != null && !i.getName().replace(" ", "").isEmpty()))
+                .isTrue();
+    }
+
+    @Test
+    public void dadoSolicitacaoTodosUsuariosDeveRetornarUsuariosComEmailsValidos() {
+
+        List<Usuario> lista = RestAssured.given()
+                .get(url("/todos"))
+                .then().extract().body().jsonPath().getList("usuarios", Usuario.class);
+
+        assertThat(lista.stream().allMatch(i -> i.getEmail() != null && !i.getEmail().replace(" ", "").isEmpty() && i.getEmail().matches("^(.+)@(.+)$")))
+                .isTrue();
+    }
+
+    @Test
+    public void dadoSolicitacaoTodosUsuariosDeveRetornarUsuariosComSenhasValidas() {
+
+        List<Usuario> lista = RestAssured.given()
+                .get(url("/todos"))
+                .then().extract().body().jsonPath().getList("usuarios", Usuario.class);
+
+        assertThat(lista.stream().allMatch(i -> i.getPassword() != null && !i.getPassword().replace(" ", "").isEmpty()))
+                .isTrue();
+    }
+
 }

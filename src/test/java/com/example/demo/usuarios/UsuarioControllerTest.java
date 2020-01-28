@@ -1,11 +1,18 @@
 package com.example.demo.usuarios;
 
 import com.example.demo.DemoApplicationTests;
+import com.github.springtestdbunit.DbUnitTestExecutionListener;
+import com.github.springtestdbunit.annotation.DatabaseOperation;
+import com.github.springtestdbunit.annotation.DatabaseSetup;
+import com.github.springtestdbunit.annotation.DatabaseSetups;
+import com.github.springtestdbunit.annotation.DatabaseTearDown;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 import java.util.List;
 
@@ -13,12 +20,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@TestExecutionListeners({DependencyInjectionTestExecutionListener.class, DbUnitTestExecutionListener.class})
+@DatabaseSetups({@DatabaseSetup(value = "/datasets/zerar-banco.xml", type = DatabaseOperation.TRUNCATE_TABLE), @DatabaseSetup("/datasets/usuarios-test.xml")})
+@DatabaseTearDown(value = "/datasets/zerar-banco.xml", type = DatabaseOperation.TRUNCATE_TABLE)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UsuarioControllerTest extends DemoApplicationTests {
 
     @Test
     public void deveRetornar201() {
-
         String json = "{\n" +
                 "\t\"name\": \"João da Silva\",\n" +
                 "\t\"email\": \"joao@silva.org\",\n" +
@@ -42,7 +51,6 @@ public class UsuarioControllerTest extends DemoApplicationTests {
 
     @Test
     public void deveRetornarNome() {
-
         String json = "{\n" +
                 "\t\"name\": \"João da Silva\",\n" +
                 "\t\"email\": \"joao@silva.org\",\n" +
@@ -65,7 +73,6 @@ public class UsuarioControllerTest extends DemoApplicationTests {
 
     @Test
     public void deveRetornarEmail() {
-
         String json = "{\n" +
                 "\t\"name\": \"João da Silva\",\n" +
                 "\t\"email\": \"joao@silva.org\",\n" +
@@ -88,7 +95,6 @@ public class UsuarioControllerTest extends DemoApplicationTests {
 
     @Test
     public void deveRetornarSenha() {
-
         String json = "{\n" +
                 "\t\"name\": \"João da Silva\",\n" +
                 "\t\"email\": \"joao@silva.org\",\n" +
@@ -100,7 +106,6 @@ public class UsuarioControllerTest extends DemoApplicationTests {
                 "\t    }\n" +
                 "\t]\n" +
                 "}\n";
-
         String senha = RestAssured.given().contentType(MediaType.APPLICATION_JSON.toString())
                 .body(json)
                 .post(url("/usuarios"))
@@ -720,7 +725,8 @@ public class UsuarioControllerTest extends DemoApplicationTests {
     public void dadoSolicitacaoTodosUsuariosDeveRetornarStatus200() {
 
         Integer statusCode = RestAssured.given()
-                .get(url("/todos"))
+                .contentType(MediaType.APPLICATION_JSON.toString())
+                .get(url("/usuarios"))
                 .then().extract().response().getStatusCode();
 
         assertThat(statusCode).isEqualTo(HttpStatus.OK.value());
@@ -729,44 +735,54 @@ public class UsuarioControllerTest extends DemoApplicationTests {
     @Test
     public void dadoSolicitacaoTodosUsuariosDeveRetornarListaDeUsuarios() {
 
-        List<Usuario> lista = RestAssured.given()
-                .get(url("/todos"))
-                .then().extract().body().jsonPath().getList("usuarios", Usuario.class);
+        List<UsuarioResponse> lista = RestAssured.given()
+                .contentType(MediaType.APPLICATION_JSON.toString())
+                .get(url("/usuarios"))
+                .then().extract().body().jsonPath().getList(".", UsuarioResponse.class);
 
-        assertThat(lista.size()).isGreaterThanOrEqualTo(0);
+        assertThat(lista.size()).isEqualTo(1);
     }
 
     @Test
     public void dadoSolicitacaoTodosUsuariosDeveRetornarUsuariosComNomesValidos() {
 
-        List<Usuario> lista = RestAssured.given()
-                .get(url("/todos"))
-                .then().extract().body().jsonPath().getList("usuarios", Usuario.class);
+        List<UsuarioResponse> lista = RestAssured.given()
+                .contentType(MediaType.APPLICATION_JSON.toString())
+                .get(url("/usuarios"))
+                .then().extract().body().jsonPath().getList(".", UsuarioResponse.class);
 
-        assertThat(lista.stream().allMatch(i -> i.getName() != null && !i.getName().replace(" ", "").isEmpty()))
-                .isTrue();
+        assertThat(lista.get(0).getName()).isEqualTo("João da Silva");
+
+//        assertThat(!lista.isEmpty() && lista.stream().allMatch(i -> i.getName() != null && !i.getName().replace(" ", "").isEmpty()))
+//                .isTrue();
     }
 
     @Test
     public void dadoSolicitacaoTodosUsuariosDeveRetornarUsuariosComEmailsValidos() {
 
-        List<Usuario> lista = RestAssured.given()
-                .get(url("/todos"))
-                .then().extract().body().jsonPath().getList("usuarios", Usuario.class);
+        List<UsuarioResponse> lista = RestAssured.given()
+                .contentType(MediaType.APPLICATION_JSON.toString())
+                .get(url("/usuarios"))
+                .then().extract().body().jsonPath().getList(".", UsuarioResponse.class);
 
-        assertThat(lista.stream().allMatch(i -> i.getEmail() != null && !i.getEmail().replace(" ", "").isEmpty() && i.getEmail().matches("^(.+)@(.+)$")))
-                .isTrue();
+        assertThat(lista.get(0).getEmail()).isEqualTo("joao@silva.org");
+
+//        assertThat(lista.stream().allMatch(i -> i.getEmail() != null && !i.getEmail().replace(" ", "").isEmpty() && i.getEmail().matches("^(.+)@(.+)$")))
+//                .isTrue();
     }
 
     @Test
     public void dadoSolicitacaoTodosUsuariosDeveRetornarUsuariosComSenhasValidas() {
 
-        List<Usuario> lista = RestAssured.given()
-                .get(url("/todos"))
-                .then().extract().body().jsonPath().getList("usuarios", Usuario.class);
+        List<UsuarioResponse> lista = RestAssured.given()
+                .contentType(MediaType.APPLICATION_JSON.toString())
+                .get(url("/usuarios"))
+                .then().extract().body().jsonPath().getList(".", UsuarioResponse.class);
 
-        assertThat(lista.stream().allMatch(i -> i.getPassword() != null && !i.getPassword().replace(" ", "").isEmpty()))
-                .isTrue();
+        assertThat(lista.get(0).getPassword()).isEqualTo("hunter2");
+
+//        assertThat(lista.stream().allMatch(i -> i.getPassword() != null && !i.getPassword().replace(" ", "").isEmpty()))
+//                .isTrue();
     }
 
 }

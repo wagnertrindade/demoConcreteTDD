@@ -19,6 +19,9 @@ public class Phone {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
+    private Usuario dono;
+
     private String number;
     private String ddd;
 }

@@ -24,6 +24,6 @@ public class Usuario {
     private String email;
     private String password;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "dono")
     private List<Phone> phones;
 }

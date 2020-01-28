@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataset>
+
+    <usuario id="999" name="João da Silva" email="joao@silva.org" password="hunter2">
+
+    </usuario>
+
+</dataset>
